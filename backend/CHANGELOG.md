@@ -5,6 +5,20 @@ All notable changes to the Idswyft Main API are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.33] - 2026-10-05
+
+### Fixed
+- **Back-of-ID barcode decoding broke all driver's-license cross-validation**
+  (`engine` + `backend`): PDF417 decoding threw
+  `ZXing.PlanarYUVLuminanceSource is not a constructor`, so the back barcode never
+  decoded, the OCR fallback returned a wrong id number with empty name/dob, and
+  cross-validation hard-failed (front vs back 0.000) — surfacing as
+  "identification failed", including on the demo page. `@zxing/library@0.23.0`
+  nests its classes under `.default` under an ESM dynamic import; the loader now
+  resolves whichever namespace exposes the classes. Pinned the engine's
+  `@zxing/library` to 0.21.3 (matching the lockfile) so `npm install` stops
+  drifting from 0.21.3 to 0.23.0 on each rebuild.
+
 ## [1.12.32] - 2026-09-23
 
 ### Changed
