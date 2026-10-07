@@ -30,13 +30,16 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --ignore-scripts
+        run: npm ci
 
       - name: Type-check
         run: npm run type-check
 
       - name: Build native stack
-        run: npm run build
+        run: |
+          npm run build
+          npm --workspace shared run build
+          npm --workspace engine run build
 
       - name: Backend tests
         run: npm run test:backend
