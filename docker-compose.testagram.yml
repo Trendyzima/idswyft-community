@@ -1,0 +1,91 @@
+# Testagram self-owned production overlay.
+# Build the verification stack from this fork's source.
+#
+# docker compose -f docker-compose.yml -f docker-compose.build.yml -f docker-compose.testagram.yml up -d --build
+
+services:
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-testagram_identity}
+      POSTGRES_USER: ${DB_USER:-testagram_identity}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    ports: []
+
+  engine:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: engine/Dockerfile
+      args:
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    image: testagram/identity-engine:local
+    environment:
+      NODE_ENV: production
+      PORT: "3002"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports: []
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: testagram/identity-api:local
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      DATABASE_URL: postgresql://${DB_USER:-testagram_identity}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-testagram_identity}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      API_KEY_SECRET: ${API_KEY_SECRET:?API_KEY_SECRET must be set}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY must be set}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN must be set}
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS must be set}
+      STORAGE_PROVIDER: local
+      RATE_LIMIT_ENABLED: "true"
+      SANDBOX_MODE: "false"
+      MIGRATIONS_LENIENT: "false"
+      ENGINE_URL: http://engine:3002
+    ports: []
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    restart: unless-stopped
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_EDITION: community
+    image: testagram/identity-portal:local
+    ports:
+      - "127.0.0.1:${IDSWYFT_PORT:-8080}:8080"
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    restart: unless-stopped
+    profiles: ["https"]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+
+  watchtower:
+    profiles: ["disabled"]
+
+volumes:
+  pgdata:
+    name: testagram_identity_pgdata
+  uploads:
+    name: testagram_identity_uploads
+  temp:
+    name: testagram_identity_temp
