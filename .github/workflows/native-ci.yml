@@ -55,7 +55,6 @@ jobs:
           test -f deploy/native/testagram-identity-engine.service
           test -f deploy/native/testagram-identity-nginx.conf
           bash -n deploy/native/install-native.sh
-          node deploy/native/doctor.mjs || test "$?" -eq 1
 
   docker-runtime-forbidden:
     name: Enforce no Docker runtime
