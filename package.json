@@ -1,36 +1,44 @@
 {
-  "name": "idswyft-mvp",
+  "name": "testagram-native-identity",
   "version": "1.0.0",
-  "description": "Identity verification platform MVP with document processing and face recognition",
+  "description": "Testagram self-owned identity verification stack — native Linux, no Docker, no managed KYC dependency",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:engine\"",
     "dev:backend": "cd backend && npm run dev",
+    "dev:engine": "cd engine && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:frontend && npm run build:backend",
-    "build:frontend": "cd frontend && npm run build",
+    "build": "npm run build:shared && npm run build:engine && npm run build:backend && npm run build:frontend",
+    "build:shared": "cd shared && npx tsc && npx tsc-alias",
+    "build:engine": "cd engine && npm run build",
     "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
     "start": "cd backend && npm start",
-    "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && npm test",
-    "test:frontend": "cd frontend && npm test",
-    "setup": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "db:setup": "cd backend && npm run db:setup",
-    "db:migrate": "cd backend && npm run db:migrate",
-    "db:seed": "cd backend && npm run db:seed"
+    "test:backend": "cd backend && npm test -- --run",
+    "test": "npm run test:backend",
+    "type-check": "npm run build:shared && cd backend && npx tsc --noEmit && cd ../engine && npx tsc --noEmit && cd ../frontend && npx tsc --noEmit",
+    "setup": "npm ci",
+    "native:doctor": "node deploy/native/doctor.mjs"
   },
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend",
+    "engine"
+  ],
   "keywords": [
+    "testagram",
     "identity",
     "verification",
     "kyc",
     "ocr",
-    "face-recognition",
-    "api"
+    "liveness",
+    "face-match",
+    "self-hosted",
+    "native-linux"
   ],
-  "author": "Idswyft Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
-  },
-  "workspaces": ["shared", "backend", "frontend", "engine"]
+  }
 }
