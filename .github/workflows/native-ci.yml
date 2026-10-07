@@ -70,7 +70,7 @@ jobs:
             echo "Docker runtime artifact detected."
             exit 1
           fi
-          if grep -RIn --exclude-dir=.git --exclude-dir=node_modules -E 'docker compose|docker-compose up|ghcr.io/team-idswyft|railway' deploy docs .github 2>/dev/null; then
+          if grep -RIn --exclude-dir=.git --exclude-dir=node_modules --exclude='native-ci.yml' -E 'docker compose|docker-compose up|ghcr.io/team-idswyft|railway' deploy docs .github 2>/dev/null; then
             echo "Managed/container deployment reference detected in native deployment surfaces."
             exit 1
           fi
