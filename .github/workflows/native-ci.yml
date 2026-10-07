@@ -1,0 +1,90 @@
+name: Testagram Native Identity CI
+
+on:
+  push:
+    branches: [main, dev, 'feature/**']
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-identity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-build:
+    name: Native build and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: testagram_identity
+          POSTGRES_USER: testagram_identity
+          POSTGRES_PASSWORD: testagram_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testagram_identity -d testagram_identity"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Build native stack
+        run: npm run build
+
+      - name: Backend tests
+        run: npm run test:backend
+
+      - name: Production dependency audit
+        run: |
+          npm audit --audit-level=high --omit=dev
+          npm --prefix backend audit --audit-level=high --omit=dev
+          npm --prefix engine audit --audit-level=high --omit=dev
+          npm --prefix frontend audit --audit-level=high --omit=dev
+          npm --prefix shared audit --audit-level=high --omit=dev
+
+      - name: Validate native deployment assets
+        run: |
+          test -f deploy/native/testagram-identity-api.service
+          test -f deploy/native/testagram-identity-engine.service
+          test -f deploy/native/testagram-identity-nginx.conf
+          bash -n deploy/native/install-native.sh
+          node deploy/native/doctor.mjs || test "$?" -eq 1
+
+  docker-runtime-forbidden:
+    name: Enforce no Docker runtime
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject Docker deployment artifacts
+        run: |
+          if find . -maxdepth 3 -type f \( -name 'Dockerfile*' -o -name 'docker-compose*.yml' -o -name 'docker-compose*.yaml' \) | grep -q .; then
+            echo "Docker runtime artifact detected."
+            exit 1
+          fi
+          if grep -RIn --exclude-dir=.git --exclude-dir=node_modules -E 'docker compose|docker-compose up|ghcr.io/team-idswyft|railway' deploy docs .github 2>/dev/null; then
+            echo "Managed/container deployment reference detected in native deployment surfaces."
+            exit 1
+          fi
+          echo "GREEN: native deployment surfaces contain no Docker/Railway runtime."
