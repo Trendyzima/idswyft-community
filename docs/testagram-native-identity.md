@@ -45,6 +45,10 @@ The verification flow is configured for national_id and must require front docum
 
 Do not mirror raw identity documents into Testagram's normal application database. Keep raw captures in the dedicated encrypted identity storage and persist only the verification result, risk decision, protected uniqueness fingerprint and audit event needed by Testagram.
 
+## CI monitoring
+
+GitHub Actions is the authoritative source-build gate for this fork. A production identity journey is not marked green until the native CI gate and the real-device camera/liveness gate both pass.
+
 ## Operational green criteria
 
 - CI: shared/backend/engine/frontend type checks green.
