@@ -1,6 +1,7 @@
 import { AppConfig } from '../types/index.js';
 
 export const config: AppConfig = {
+  nativeSelfHosted: process.env.TESTAGRAM_NATIVE_SELF_HOSTED !== 'false',
   port: parseInt(process.env.PORT || '3001'),
   nodeEnv: process.env.NODE_ENV || 'development',
   corsOrigins: process.env.TESTAGRAM_NATIVE_SELF_HOSTED !== 'false'
