@@ -30,7 +30,7 @@ else
 fi
 
 chown -R testagram-id:testagram-id "$APP_DIR"
-sudo -u testagram-id bash -lc "cd '$APP_DIR' && npm ci && npm run build"
+runuser -u testagram-id -- bash -lc "cd '$APP_DIR' && npm ci && npm run build"
 install -d -o testagram-id -g testagram-id "$APP_DIR/backend/uploads" "$APP_DIR/backend/temp"
 
 if [[ ! -f "$CONFIG_DIR/backend.env" ]]; then
