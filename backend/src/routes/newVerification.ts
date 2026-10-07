@@ -691,8 +691,8 @@ async function notifyTestagramNativeTerminal(
     registration_intent_id: registrationIntentId,
     verification_id: verificationId,
     status: finalResult,
-    id_number: idNumber || null,
-    date_of_birth: birthDate || null,
+    id_number: finalResult === 'verified' ? (idNumber || null) : null,
+    date_of_birth: finalResult === 'verified' ? (birthDate || null) : null,
     timestamp: new Date().toISOString(),
   };
   const raw = JSON.stringify(payload);
